@@ -16,6 +16,13 @@ window.onload = function() {
     let currentPhotoX = PHOTO_PADDING;
     let currentPhotoY = PHOTO_PADDING;
 
+    const customIcon = L.icon({
+        iconUrl: 'images/balloon2.png',
+        iconSize: [50, 50],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32]
+    });
+
     // Initialize map with geolocation
     navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError);
 
@@ -24,12 +31,14 @@ window.onload = function() {
         let long = position.coords.longitude;
         
         map = L.map('travelMap').setView([lat, long], 17);
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: 'Multimedia'
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
+	        attribution: 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
+	        maxZoom: 16
         }).addTo(map);
         
-        L.marker([lat, long]).addTo(map);
+        // Use the custom icon for current location
+        const customMarker = L.marker([lat, long], { icon: customIcon }).addTo(map);
+        customMarker.bindPopup('Current location with the balloon!');
         
         setupEventListeners();
         setupDragAndDrop();
@@ -39,9 +48,9 @@ window.onload = function() {
     function onLocationError(error) {
         console.log(error);
         map = L.map('travelMap').setView([0, 0], 2);
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: 'Multimedia'
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}', {
+	        attribution: 'Tiles &copy; Esri &mdash; National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA, ESA, METI, NRCAN, GEBCO, NOAA, iPC',
+	        maxZoom: 16
         }).addTo(map);
         
         setupEventListeners();
@@ -424,7 +433,8 @@ window.onload = function() {
                     const data = await response.json();
                     
                     if (data.length > 0) {
-                        const marker = L.marker([data[0].lat, data[0].lon])
+                        // Use the custom icon for each location marker
+                        const marker = L.marker([data[0].lat, data[0].lon], { icon: customIcon })
                             .bindPopup(location.name)
                             .addTo(map);
                         markers.push(marker);
