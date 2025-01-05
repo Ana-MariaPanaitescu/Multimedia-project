@@ -20,17 +20,14 @@ window.onload = function() {
         let lat = position.coords.latitude;
         let long = position.coords.longitude;
         
-        // Initialize map
         map = L.map('travelMap').setView([lat, long], 17);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: 'Multimedia'
         }).addTo(map);
         
-        // Add initial marker
         L.marker([lat, long]).addTo(map);
         
-        // Setup all other functionality
         setupEventListeners();
         setupDragAndDrop();
         loadDays();
@@ -38,28 +35,26 @@ window.onload = function() {
 
     function onLocationError(error) {
         console.log(error);
-        // Initialize map with default view if geolocation fails
         map = L.map('travelMap').setView([0, 0], 2);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: 'Multimedia'
         }).addTo(map);
         
-        // Setup all other functionality
         setupEventListeners();
         setupDragAndDrop();
         loadDays();
     }
 
-    // Set up Canvas
-    function setupCanvas() {
+     // Set up Canvas for photo display
+     function setupCanvas() {
         photoCanvas = document.createElement('canvas');
-        photoCanvas.width = 600;
+        photoCanvas.width = 465;
         photoCanvas.height = 400;
+
         photoCanvas.style.border = '1px solid #ccc';
         photoCanvas.style.marginTop = '10px';
         
-        // Replace the photoPreview div with our canvas
         const photoPreview = document.getElementById('photoPreview');
         photoPreview.innerHTML = '';
         photoPreview.appendChild(photoCanvas);
@@ -67,18 +62,8 @@ window.onload = function() {
         photoCtx = photoCanvas.getContext('2d');
         photoCtx.fillStyle = '#f8f9fa';
         photoCtx.fillRect(0, 0, photoCanvas.width, photoCanvas.height);
-    }
 
-    // Drag and Drop
-    function setupDragAndDrop() {
-        setupCanvas(); // Add canvas setup first
-        
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-
-        dropZone.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
+        // Add drag and drop events to canvas
         photoCanvas.addEventListener('dragover', (e) => {
             e.preventDefault();
             photoCanvas.style.border = '2px dashed #007bff';
@@ -91,6 +76,32 @@ window.onload = function() {
         photoCanvas.addEventListener('drop', (e) => {
             e.preventDefault();
             photoCanvas.style.border = '1px solid #ccc';
+            handleFiles(e.dataTransfer.files);
+        });
+    }
+
+    // Setup drag and drop functionality
+    function setupDragAndDrop() {
+        setupCanvas();
+        
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
             handleFiles(e.dataTransfer.files);
         });
     }
@@ -135,6 +146,98 @@ window.onload = function() {
         });
     }
 
+    function createDayElement(day) {
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'accordion-item';
+        
+        const locationsHTML = day.locations.map((location, index) => 
+            createLocationHTML(location, index === day.locations.length - 1)
+        ).join('');
+        
+        dayDiv.innerHTML = `
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#day${day.id}">
+                    ${new Date(day.date).toLocaleDateString()}
+                </button>
+            </h2>
+            <div id="day${day.id}" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    ${locationsHTML}
+                    <button class="btn btn-primary mt-3" onclick="addLocationToDay(${day.id})">
+                        Add New Location
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        return dayDiv;
+    }
+
+    function createLocationHTML(location, isLast) {
+        return `
+            <div class="location-container">
+                <div class="location-item mb-2 d-flex align-items-center" 
+                     onclick="showLocationDetails('${location.name}', '${location.notes}', ${JSON.stringify(location.photos)})">
+                    <span class="me-2">📍</span>
+                    <div>
+                        <div class="fw-bold">${location.name}</div>
+                        <div class="text-muted small">${location.notes}</div>
+                    </div>
+                </div>
+                ${!isLast ? '<div class="text-center mb-2">↓</div>' : ''}
+            </div>
+        `;
+    }
+
+    // Add location to existing day
+    window.addLocationToDay = function(dayId) {
+        droppedPhotos = [];
+        document.getElementById('dateInput').value = '';
+        document.getElementById('locationInput').value = '';
+        document.getElementById('notesInput').value = '';
+        
+        // Reset canvas
+        setupCanvas();
+        
+        const modal = new bootstrap.Modal(document.getElementById('staticBackdrop'));
+        modal.show();
+
+        // Remove existing click handler and add new one for saving location
+        const saveButton = document.getElementById('saveDay');
+        saveButton.onclick = () => saveNewLocation(dayId);
+    };
+
+    function saveNewLocation(dayId) {
+        const location = document.getElementById('locationInput').value;
+        const notes = document.getElementById('notesInput').value;
+        
+        if (!location || !notes) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        const days = JSON.parse(localStorage.getItem('travelDays') || '[]');
+        const dayIndex = days.findIndex(day => day.id === dayId);
+        
+        if (dayIndex > -1) {
+            days[dayIndex].locations.push({
+                name: location,
+                notes,
+                photos: droppedPhotos
+            });
+            localStorage.setItem('travelDays', JSON.stringify(days));
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('staticBackdrop'));
+            modal.hide();
+            
+            // Reset save button to original handler
+            document.getElementById('saveDay').onclick = saveNewDay;
+            
+            loadDays();
+        }
+    }
+
     // Modified saveNewDay to handle unique dates
     function saveNewDay() {
         const date = document.getElementById('dateInput').value;
@@ -156,7 +259,7 @@ window.onload = function() {
             days[existingDayIndex].locations.push({
                 name: location,
                 notes,
-                photos: droppedPhotos
+                photos: droppedPhotosf
             });
         } else {
             // Create new day
@@ -186,69 +289,21 @@ window.onload = function() {
         loadDays();
     }
 
-     // Modified createLocationHTML to show arrows between locations
-     function createLocationHTML(location, isLast) {
-        return `
-            <div class="location-container">
-                <div class="location-item mb-2 d-flex align-items-center" 
-                     onclick="showLocationDetails('${location.name}', '${location.notes}')">
-                    <span class="me-2">📍</span>
-                    <div>
-                        <div class="fw-bold">${location.name}</div>
-                        <div class="text-muted small">${location.notes}</div>
-                    </div>
-                </div>
-                ${!isLast ? '<div class="text-center mb-2">↓</div>' : ''}
-            </div>
-        `;
-    }
-
-    // Modified createDayElement to handle location arrows
-    function createDayElement(day) {
-        const dayDiv = document.createElement('div');
-        dayDiv.className = 'accordion-item';
-        
-        const locationsHTML = day.locations.map((location, index) => 
-            createLocationHTML(location, index === day.locations.length - 1)
-        ).join('');
-        
-        dayDiv.innerHTML = `
-            <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#day${day.id}">
-                    Day ${day.date}
-                </button>
-            </h2>
-            <div id="day${day.id}" class="accordion-collapse collapse">
-                <div class="accordion-body">
-                    ${locationsHTML}
-                </div>
-            </div>
-        `;
-        
-        return dayDiv;
-    }
-
     // Setup Event Listeners
     function setupEventListeners() {
-        // New Day button
         const newDayBtn = document.querySelector('.btn-primary');
         newDayBtn.addEventListener('click', () => {
             droppedPhotos = [];
             document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
             document.getElementById('locationInput').value = '';
             document.getElementById('notesInput').value = '';
-            document.getElementById('photoPreview').innerHTML = '';
+            setupCanvas();
             
-            // Show modal using Bootstrap
             const modal = new bootstrap.Modal(document.getElementById('staticBackdrop'));
             modal.show();
         });
 
-        // Get Current Location button
         document.getElementById('getCurrentLocation').addEventListener('click', getCurrentLocation);
-        
-        // Save button
         document.getElementById('saveDay').addEventListener('click', saveNewDay);
     }
 
@@ -330,11 +385,26 @@ window.onload = function() {
         }
     }
 
-    // Make showLocationDetails available globally
-    window.showLocationDetails = function(name, notes) {
+     // Update showLocationDetails to handle photos
+     window.showLocationDetails = function(name, notes, photos) {
         const modal = new bootstrap.Modal(document.getElementById('locationDetailsModal'));
         document.getElementById('locationDetailsTitle').textContent = name;
         document.getElementById('locationDetailsNotes').textContent = notes;
+        
+        const photosContainer = document.getElementById('locationDetailsPhotos');
+        photosContainer.innerHTML = '';
+        
+        if (photos && photos.length > 0) {
+            photos.forEach(photo => {
+                const img = document.createElement('img');
+                img.src = photo.data;
+                img.style.maxWidth = '200px';
+                img.style.maxHeight = '200px';
+                img.className = 'me-2 mb-2';
+                photosContainer.appendChild(img);
+            });
+        }
+        
         modal.show();
     };
 }
