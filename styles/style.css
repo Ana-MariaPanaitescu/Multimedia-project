@@ -22,3 +22,8 @@ h1 {
     overflow: auto;
     max-height: 400px;  /* Adjust this value based on your design */
 }
+#locationCanvas {
+    overflow-x: auto;
+    white-space: nowrap;
+}
+

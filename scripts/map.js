@@ -175,10 +175,17 @@ window.onload = function() {
     }
 
     function createLocationHTML(location, isLast) {
+        // Escape the location data to prevent JSON parsing errors
+        const safeLocation = JSON.stringify({
+            name: location.name,
+            notes: location.notes,
+            photos: location.photos || []
+        }).replace(/'/g, "\\'");
+    
         return `
             <div class="location-container">
                 <div class="location-item mb-2 d-flex align-items-center" 
-                     onclick="showLocationDetails(${JSON.stringify(location)})">
+                     onclick='showLocationDetails(${safeLocation})'>
                     <span class="me-2">📍</span>
                     <div>
                         <div class="fw-bold">${location.name}</div>
@@ -193,9 +200,7 @@ window.onload = function() {
     // Add location to existing day
     window.addLocationToDay = function(dayId) {
         droppedPhotos = [];
-        // Hide date input since we're adding to existing day
-        document.getElementById('dateContainer').style.display = 'none';
-        document.getElementById('staticBackdropLabel').textContent = 'Add New Location';
+        document.getElementById('dateInput').value = '';
         document.getElementById('locationInput').value = '';
         document.getElementById('notesInput').value = '';
         
@@ -204,7 +209,7 @@ window.onload = function() {
         
         const modal = new bootstrap.Modal(document.getElementById('staticBackdrop'));
         modal.show();
-    
+
         // Remove existing click handler and add new one for saving location
         const saveButton = document.getElementById('saveDay');
         saveButton.onclick = () => saveNewLocation(dayId);
@@ -218,7 +223,7 @@ window.onload = function() {
             alert('Please fill in all required fields');
             return;
         }
-    
+
         const days = JSON.parse(localStorage.getItem('travelDays') || '[]');
         const dayIndex = days.findIndex(day => day.id === dayId);
         
@@ -226,16 +231,12 @@ window.onload = function() {
             days[dayIndex].locations.push({
                 name: location,
                 notes,
-                photos: droppedPhotos // Save the photos array
+                photos: droppedPhotos
             });
             localStorage.setItem('travelDays', JSON.stringify(days));
             
             const modal = bootstrap.Modal.getInstance(document.getElementById('staticBackdrop'));
             modal.hide();
-            
-            // Reset modal for future use
-            document.getElementById('dateContainer').style.display = 'block';
-            document.getElementById('staticBackdropLabel').textContent = 'Add New Day';
             
             // Reset save button to original handler
             document.getElementById('saveDay').onclick = saveNewDay;
@@ -265,7 +266,7 @@ window.onload = function() {
             days[existingDayIndex].locations.push({
                 name: location,
                 notes,
-                photos: droppedPhotos // Fixed typo in variable name
+                photos: droppedPhotos  // Fixed typo from droppedPhotosf
             });
         } else {
             // Create new day
@@ -275,14 +276,14 @@ window.onload = function() {
                 locations: [{
                     name: location,
                     notes,
-                    photos: droppedPhotos // Save the photos array
+                    photos: droppedPhotos
                 }]
             });
         }
     
         localStorage.setItem('travelDays', JSON.stringify(days));
         
-        // Reset canvas and photos array
+        // Reset canvas
         photoCtx.fillStyle = '#f8f9fa';
         photoCtx.fillRect(0, 0, photoCanvas.width, photoCanvas.height);
         currentPhotoX = PHOTO_PADDING;
@@ -293,7 +294,7 @@ window.onload = function() {
         modal.hide();
         
         loadDays();
-    }    
+    }
 
     // Setup Event Listeners
     function setupEventListeners() {
@@ -400,6 +401,7 @@ window.onload = function() {
         const photosContainer = document.getElementById('locationDetailsPhotos');
         photosContainer.innerHTML = '';
         
+        // Handle photos in grid view
         if (location.photos && location.photos.length > 0) {
             location.photos.forEach(photo => {
                 const img = document.createElement('img');
@@ -409,10 +411,12 @@ window.onload = function() {
                 img.className = 'me-2 mb-2';
                 photosContainer.appendChild(img);
             });
-    
-            // Draw photos on canvas
+            
+            // Handle photos in canvas view
             const canvas = document.getElementById('locationCanvas');
             const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
             ctx.fillStyle = '#f8f9fa';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
@@ -440,6 +444,19 @@ window.onload = function() {
                 };
                 img.src = photo.data;
             });
+        } else {
+            // Show a message if no photos
+            photosContainer.innerHTML = '<p>No photos available for this location.</p>';
+            
+            // Clear canvas
+            const canvas = document.getElementById('locationCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#666';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('No photos available', canvas.width/2, canvas.height/2);
         }
         
         modal.show();
