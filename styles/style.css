@@ -1,58 +1,183 @@
-.container{
+/* General container styling */
+.container {
     display: flex;
     justify-content: center;
-    margin: 30 20px;
+    margin: 30px 20px;
 }
 
 h1 {
-    font-size: 2.5em;
-    color: #333;
+    font-size: 2.8em;
+    color: #444;
     margin: 40px;
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: 1px;
 }
 
+/* Travel map styling */
 #travelMap {
     height: 500px;
     width: calc(100% - 40px);
     border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     margin: 30px 20px;
+    border: 2px solid #ccc;
 }
 
-#insertDayBtn{
+/* Button styling */
+#insertDayBtn {
     margin-bottom: 40px;
-}
-
-#photoPreview {
-    overflow: auto;
-    max-height: 400px;  /* Adjust this value based on your design */
-}
-#locationCanvas {
-    width: 100%; /* Make the canvas width 100% of its container */
-    height: auto; /* Maintain aspect ratio */
-    max-width: 100%; /* Ensure it doesn't exceed the width of its parent */
-    border: 1px solid #ccc; /* Optional, to maintain the border style */
-}
-
-.photo-thumbnails {
+    padding: 12px 20px;
+    font-size: 1.2em;
+    border-radius: 30px;
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    color: #fff;
     transition: all 0.3s ease;
 }
 
+#insertDayBtn:hover {
+    background: linear-gradient(45deg, #0056b3, #003a75);
+    transform: scale(1.05);
+    color: #fff;
+}
+
+/* Accordion and modals styling */
+#daysContainer {
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+}
+
+.modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    background-color: #007bff;
+    color: #fff;
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-footer {
+    border-top: none;
+    justify-content: space-between;
+}
+
+/* Form input styling */
+form label {
+    font-weight: bold;
+    color: #555;
+}
+
+form input,
+form textarea {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 1em;
+    width: 100%;
+}
+
+form input:focus,
+form textarea:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
+}
+
+/* Dropzone styling */
+#dropZone {
+    border: 2px dashed #007bff;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    color: #007bff;
+    font-size: 1.1em;
+    cursor: pointer;
+    background-color: rgba(0, 123, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+#dropZone:hover {
+    background-color: rgba(0, 123, 255, 0.2);
+    color: #0056b3;
+}
+
+/* Photo preview styling */
+#photoPreview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    overflow: auto;
+    max-height: 300px;
+    padding-top: 10px;
+}
+
 .thumbnail-img {
-    transition: transform 0.2s ease;
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
     cursor: pointer;
 }
 
 .thumbnail-img:hover {
     transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-.location-item {
-    cursor: pointer;
-    padding: 10px;
+/* Canvas styling */
+#locationCanvas {
+    width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
     border-radius: 8px;
-    transition: background-color 0.2s ease;
+    margin-top: 20px;
+}
+
+/* Accordion item styling */
+.location-item {
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background: #fff;
+    transition: all 0.3s ease;
 }
 
 .location-item:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 123, 255, 0.1);
+    border-color: #007bff;
+    transform: scale(1.02);
+}
+
+/* Responsive design adjustments */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2em;
+    }
+
+    #travelMap {
+        height: 400px;
+    }
+
+    #insertDayBtn {
+        font-size: 1em;
+        padding: 10px 15px;
+    }
+
+    .modal-content {
+        padding: 10px;
+    }
+
+    #photoPreview {
+        max-height: 250px;
+    }
 }
