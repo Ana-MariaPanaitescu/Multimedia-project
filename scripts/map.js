@@ -182,15 +182,31 @@ window.onload = function() {
             photos: location.photos || []
         }).replace(/'/g, "\\'");
     
+        // Add photo preview thumbnails
+        const photoThumbnails = location.photos && location.photos.length > 0 
+            ? `<div class="photo-thumbnails d-flex flex-wrap gap-2 mt-2">
+                ${location.photos.map(photo => `
+                    <img src="${photo.data}" 
+                         alt="Location photo" 
+                         class="thumbnail-img"
+                         style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"
+                    >
+                `).join('')}
+               </div>`
+            : '';
+    
         return `
             <div class="location-container">
-                <div class="location-item mb-2 d-flex align-items-center" 
+                <div class="location-item mb-2" 
                      onclick='showLocationDetails(${safeLocation})'>
-                    <span class="me-2">📍</span>
-                    <div>
-                        <div class="fw-bold">${location.name}</div>
-                        <div class="text-muted small">${location.notes}</div>
+                    <div class="d-flex align-items-center">
+                        <span class="me-2">📍</span>
+                        <div>
+                            <div class="fw-bold">${location.name}</div>
+                            <div class="text-muted small">${location.notes}</div>
+                        </div>
                     </div>
+                    ${photoThumbnails}
                 </div>
                 ${!isLast ? '<div class="text-center mb-2">↓</div>' : ''}
             </div>
@@ -215,34 +231,18 @@ window.onload = function() {
         saveButton.onclick = () => saveNewLocation(dayId);
     };
 
-    function saveNewLocation(dayId) {
-        const location = document.getElementById('locationInput').value;
-        const notes = document.getElementById('notesInput').value;
+    function resetForm() {
+        // Reset canvas
+        photoCtx.fillStyle = '#f8f9fa';
+        photoCtx.fillRect(0, 0, photoCanvas.width, photoCanvas.height);
+        currentPhotoX = PHOTO_PADDING;
+        currentPhotoY = PHOTO_PADDING;
+        droppedPhotos = [];
         
-        if (!location || !notes) {
-            alert('Please fill in all required fields');
-            return;
-        }
-
-        const days = JSON.parse(localStorage.getItem('travelDays') || '[]');
-        const dayIndex = days.findIndex(day => day.id === dayId);
-        
-        if (dayIndex > -1) {
-            days[dayIndex].locations.push({
-                name: location,
-                notes,
-                photos: droppedPhotos
-            });
-            localStorage.setItem('travelDays', JSON.stringify(days));
-            
-            const modal = bootstrap.Modal.getInstance(document.getElementById('staticBackdrop'));
-            modal.hide();
-            
-            // Reset save button to original handler
-            document.getElementById('saveDay').onclick = saveNewDay;
-            
-            loadDays();
-        }
+        // Reset form inputs
+        document.getElementById('dateInput').value = '';
+        document.getElementById('locationInput').value = '';
+        document.getElementById('notesInput').value = '';
     }
 
     // Modified saveNewDay to handle unique dates
@@ -258,6 +258,15 @@ window.onload = function() {
     
         const days = JSON.parse(localStorage.getItem('travelDays') || '[]');
         
+        // Process photos before saving
+        const processedPhotos = droppedPhotos.map(photo => ({
+            data: photo.data,
+            x: photo.x,
+            y: photo.y,
+            width: photo.width,
+            height: photo.height
+        }));
+        
         // Check if date already exists
         const existingDayIndex = days.findIndex(day => day.date === date);
         
@@ -266,7 +275,7 @@ window.onload = function() {
             days[existingDayIndex].locations.push({
                 name: location,
                 notes,
-                photos: droppedPhotos  // Fixed typo from droppedPhotosf
+                photos: processedPhotos
             });
         } else {
             // Create new day
@@ -276,24 +285,63 @@ window.onload = function() {
                 locations: [{
                     name: location,
                     notes,
-                    photos: droppedPhotos
+                    photos: processedPhotos
                 }]
             });
         }
     
         localStorage.setItem('travelDays', JSON.stringify(days));
         
-        // Reset canvas
-        photoCtx.fillStyle = '#f8f9fa';
-        photoCtx.fillRect(0, 0, photoCanvas.width, photoCanvas.height);
-        currentPhotoX = PHOTO_PADDING;
-        currentPhotoY = PHOTO_PADDING;
-        droppedPhotos = [];
+        // Reset form and canvas
+        resetForm();
         
         const modal = bootstrap.Modal.getInstance(document.getElementById('staticBackdrop'));
         modal.hide();
         
         loadDays();
+    }
+
+    function saveNewLocation(dayId) {
+        const location = document.getElementById('locationInput').value;
+        const notes = document.getElementById('notesInput').value;
+        
+        if (!location || !notes) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        const days = JSON.parse(localStorage.getItem('travelDays') || '[]');
+        const dayIndex = days.findIndex(day => day.id === dayId);
+        
+        if (dayIndex > -1) {
+            // Process photos before saving
+            const processedPhotos = droppedPhotos.map(photo => ({
+                data: photo.data,
+                x: photo.x,
+                y: photo.y,
+                width: photo.width,
+                height: photo.height
+            }));
+            
+            days[dayIndex].locations.push({
+                name: location,
+                notes,
+                photos: processedPhotos
+            });
+            
+            localStorage.setItem('travelDays', JSON.stringify(days));
+            
+            // Reset form and canvas
+            resetForm();
+            
+            const modal = bootstrap.Modal.getInstance(document.getElementById('staticBackdrop'));
+            modal.hide();
+            
+            // Reset save button to original handler
+            document.getElementById('saveDay').onclick = saveNewDay;
+            
+            loadDays();
+        }
     }
 
     // Setup Event Listeners

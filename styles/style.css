@@ -27,3 +27,26 @@ h1 {
     white-space: nowrap;
 }
 
+.photo-thumbnails {
+    transition: all 0.3s ease;
+}
+
+.thumbnail-img {
+    transition: transform 0.2s ease;
+    cursor: pointer;
+}
+
+.thumbnail-img:hover {
+    transform: scale(1.1);
+}
+
+.location-item {
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.location-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}

@@ -72,9 +72,11 @@
                         <!--The fourth label is used for drag&drop or attaching the files/photos-->
                         <div class="mb-3">
                             <label class="form-label">Photos</label>
-                            <div id="dropZone" class="drop-zone">
+                            <div id="dropZone" class="drop-zone" 
+                                 ondrop="handleDrop(event)" 
+                                 ondragover="allowDrop(event)">
                                 Drag & drop photos here or click to upload
-                                <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+                                <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="previewFiles()">
                             </div>
                             <div id="photoPreview" class="d-flex flex-wrap gap-2"></div>
                         </div>
@@ -90,8 +92,6 @@
     </div>
 
     <!-- Location details modal -->
-     <!--de adaugat atunci cand e in pop up locatia, pentru a vedea detaliile sa avem: 1. un chenar cu titlu details si in chenar sa fie informatiile despre locatie
-     2. un chenar tip canvas in care sa stocam pozele - tema de gandire ca daca avem canvasul prea mic si prea multe poze, si ies pozele din canvas ce facem????-->
     <div class="modal fade" id="locationDetailsModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -104,7 +104,7 @@
                     <div id="locationDetailsPhotos" class="d-flex flex-wrap gap-3"></div>
                     <!-- Canvas for photo preview -->
                     <h5>Photos on Canvas</h5>
-                    <canvas id="locationCanvas" width="800" height="400" style="border: 1px solid #ccc;"></canvas>
+                    <canvas id="locationCanvas" width="465" height="400" style="border: 1px solid #ccc;"></canvas>
                 </div>
             </div>
         </div>
