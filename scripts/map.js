@@ -446,31 +446,23 @@ window.onload = function() {
         document.getElementById('locationDetailsTitle').textContent = location.name;
         document.getElementById('locationDetailsNotes').textContent = location.notes;
         
+        // Clear the photos container but keep it for structure
         const photosContainer = document.getElementById('locationDetailsPhotos');
         photosContainer.innerHTML = '';
         
-        // Handle photos in grid view
+        // Handle canvas display
+        const canvas = document.getElementById('locationCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.fillStyle = '#f8f9fa';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
         if (location.photos && location.photos.length > 0) {
-            location.photos.forEach(photo => {
-                const img = document.createElement('img');
-                img.src = photo.data;
-                img.style.maxWidth = '200px';
-                img.style.maxHeight = '200px';
-                img.className = 'me-2 mb-2';
-                photosContainer.appendChild(img);
-            });
-            
-            // Handle photos in canvas view
-            const canvas = document.getElementById('locationCanvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Clear canvas
-            ctx.fillStyle = '#f8f9fa';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
             let currentX = 10;
             let currentY = 10;
             const maxHeight = 100;
+            let loadedImages = 0;
             
             location.photos.forEach(photo => {
                 const img = new Image();
@@ -489,18 +481,17 @@ window.onload = function() {
                     // Draw image
                     ctx.drawImage(img, currentX, currentY, width, height);
                     currentX += width + 10;
+                    
+                    loadedImages++;
+                    // If all images are loaded, make sure they're visible
+                    if (loadedImages === location.photos.length) {
+                        canvas.style.display = 'block';
+                    }
                 };
                 img.src = photo.data;
             });
         } else {
-            // Show a message if no photos
-            photosContainer.innerHTML = '<p>No photos available for this location.</p>';
-            
-            // Clear canvas
-            const canvas = document.getElementById('locationCanvas');
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#f8f9fa';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Show "No photos available" message in canvas
             ctx.fillStyle = '#666';
             ctx.font = '16px Arial';
             ctx.textAlign = 'center';

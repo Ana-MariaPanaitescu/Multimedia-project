@@ -18,13 +18,19 @@ h1 {
     margin: 30px 20px;
 }
 
+#insertDayBtn{
+    margin-bottom: 40px;
+}
+
 #photoPreview {
     overflow: auto;
     max-height: 400px;  /* Adjust this value based on your design */
 }
 #locationCanvas {
-    overflow-x: auto;
-    white-space: nowrap;
+    width: 100%; /* Make the canvas width 100% of its container */
+    height: auto; /* Maintain aspect ratio */
+    max-width: 100%; /* Ensure it doesn't exceed the width of its parent */
+    border: 1px solid #ccc; /* Optional, to maintain the border style */
 }
 
 .photo-thumbnails {
