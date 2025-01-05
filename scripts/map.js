@@ -1,4 +1,7 @@
 window.onload = function() {
+
+    // Clear localStorage when page loads
+    localStorage.removeItem('travelDays');
     
     // Global variables
     let map;
@@ -245,17 +248,12 @@ window.onload = function() {
         document.getElementById('notesInput').value = '';
     }
 
-    // Modified saveNewDay to handle unique dates
+    // Modified saveNewDay function without validations
     function saveNewDay() {
         const date = document.getElementById('dateInput').value;
         const location = document.getElementById('locationInput').value;
         const notes = document.getElementById('notesInput').value;
         
-        if (!date || !location || !notes) {
-            alert('Please fill in all required fields');
-            return;
-        }
-    
         const days = JSON.parse(localStorage.getItem('travelDays') || '[]');
         
         // Process photos before saving
@@ -301,15 +299,11 @@ window.onload = function() {
         loadDays();
     }
 
+    // Modified saveNewLocation function without validations
     function saveNewLocation(dayId) {
         const location = document.getElementById('locationInput').value;
         const notes = document.getElementById('notesInput').value;
         
-        if (!location || !notes) {
-            alert('Please fill in all required fields');
-            return;
-        }
-
         const days = JSON.parse(localStorage.getItem('travelDays') || '[]');
         const dayIndex = days.findIndex(day => day.id === dayId);
         
@@ -354,12 +348,19 @@ window.onload = function() {
             document.getElementById('notesInput').value = '';
             setupCanvas();
             
+            // Ensure the save button has the correct handler
+            const saveButton = document.getElementById('saveDay');
+            saveButton.onclick = saveNewDay;
+            
             const modal = new bootstrap.Modal(document.getElementById('staticBackdrop'));
             modal.show();
         });
-
+    
         document.getElementById('getCurrentLocation').addEventListener('click', getCurrentLocation);
-        document.getElementById('saveDay').addEventListener('click', saveNewDay);
+        
+        // Ensure the save button is properly initialized
+        const saveButton = document.getElementById('saveDay');
+        saveButton.onclick = saveNewDay;
     }
 
     function displayPhotoPreview(photoData) {
