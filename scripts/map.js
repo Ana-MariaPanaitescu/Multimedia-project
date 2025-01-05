@@ -1,8 +1,17 @@
 window.onload = function() {
+    
     // Global variables
     let map;
     let markers = [];
     let droppedPhotos = [];
+
+    // New canvas-related variables
+    let photoCanvas;
+    let photoCtx;
+    const PHOTO_SIZE = 100;
+    const PHOTO_PADDING = 10;
+    let currentPhotoX = PHOTO_PADDING;
+    let currentPhotoY = PHOTO_PADDING;
 
     // Initialize map with geolocation
     navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError);
@@ -42,6 +51,184 @@ window.onload = function() {
         loadDays();
     }
 
+    // Set up Canvas
+    function setupCanvas() {
+        photoCanvas = document.createElement('canvas');
+        photoCanvas.width = 600;
+        photoCanvas.height = 400;
+        photoCanvas.style.border = '1px solid #ccc';
+        photoCanvas.style.marginTop = '10px';
+        
+        // Replace the photoPreview div with our canvas
+        const photoPreview = document.getElementById('photoPreview');
+        photoPreview.innerHTML = '';
+        photoPreview.appendChild(photoCanvas);
+        
+        photoCtx = photoCanvas.getContext('2d');
+        photoCtx.fillStyle = '#f8f9fa';
+        photoCtx.fillRect(0, 0, photoCanvas.width, photoCanvas.height);
+    }
+
+    // Drag and Drop
+    function setupDragAndDrop() {
+        setupCanvas(); // Add canvas setup first
+        
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        photoCanvas.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            photoCanvas.style.border = '2px dashed #007bff';
+        });
+
+        photoCanvas.addEventListener('dragleave', () => {
+            photoCanvas.style.border = '1px solid #ccc';
+        });
+
+        photoCanvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            photoCanvas.style.border = '1px solid #ccc';
+            handleFiles(e.dataTransfer.files);
+        });
+    }
+
+    function handleFiles(files) {
+        Array.from(files).forEach(file => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // Calculate scaled dimensions
+                        let scale = Math.min(PHOTO_SIZE / img.width, PHOTO_SIZE / img.height);
+                        let width = img.width * scale;
+                        let height = img.height * scale;
+                        
+                        // Check if we need to move to next row
+                        if (currentPhotoX + width + PHOTO_PADDING > photoCanvas.width) {
+                            currentPhotoX = PHOTO_PADDING;
+                            currentPhotoY += PHOTO_SIZE + PHOTO_PADDING;
+                        }
+                        
+                        // Draw image on canvas
+                        photoCtx.drawImage(img, currentPhotoX, currentPhotoY, width, height);
+                        
+                        // Store photo data
+                        droppedPhotos.push({
+                            data: e.target.result,
+                            x: currentPhotoX,
+                            y: currentPhotoY,
+                            width: width,
+                            height: height
+                        });
+                        
+                        // Update position for next photo
+                        currentPhotoX += width + PHOTO_PADDING;
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Modified saveNewDay to handle unique dates
+    function saveNewDay() {
+        const date = document.getElementById('dateInput').value;
+        const location = document.getElementById('locationInput').value;
+        const notes = document.getElementById('notesInput').value;
+        
+        if (!date || !location || !notes) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        const days = JSON.parse(localStorage.getItem('travelDays') || '[]');
+        
+        // Check if date already exists
+        const existingDayIndex = days.findIndex(day => day.date === date);
+        
+        if (existingDayIndex >= 0) {
+            // Add location to existing date
+            days[existingDayIndex].locations.push({
+                name: location,
+                notes,
+                photos: droppedPhotos
+            });
+        } else {
+            // Create new day
+            days.push({
+                id: Date.now(),
+                date,
+                locations: [{
+                    name: location,
+                    notes,
+                    photos: droppedPhotos
+                }]
+            });
+        }
+
+        localStorage.setItem('travelDays', JSON.stringify(days));
+        
+        // Reset canvas
+        photoCtx.fillStyle = '#f8f9fa';
+        photoCtx.fillRect(0, 0, photoCanvas.width, photoCanvas.height);
+        currentPhotoX = PHOTO_PADDING;
+        currentPhotoY = PHOTO_PADDING;
+        droppedPhotos = [];
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('staticBackdrop'));
+        modal.hide();
+        
+        loadDays();
+    }
+
+     // Modified createLocationHTML to show arrows between locations
+     function createLocationHTML(location, isLast) {
+        return `
+            <div class="location-container">
+                <div class="location-item mb-2 d-flex align-items-center" 
+                     onclick="showLocationDetails('${location.name}', '${location.notes}')">
+                    <span class="me-2">📍</span>
+                    <div>
+                        <div class="fw-bold">${location.name}</div>
+                        <div class="text-muted small">${location.notes}</div>
+                    </div>
+                </div>
+                ${!isLast ? '<div class="text-center mb-2">↓</div>' : ''}
+            </div>
+        `;
+    }
+
+    // Modified createDayElement to handle location arrows
+    function createDayElement(day) {
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'accordion-item';
+        
+        const locationsHTML = day.locations.map((location, index) => 
+            createLocationHTML(location, index === day.locations.length - 1)
+        ).join('');
+        
+        dayDiv.innerHTML = `
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#day${day.id}">
+                    Day ${day.date}
+                </button>
+            </h2>
+            <div id="day${day.id}" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    ${locationsHTML}
+                </div>
+            </div>
+        `;
+        
+        return dayDiv;
+    }
+
     // Setup Event Listeners
     function setupEventListeners() {
         // New Day button
@@ -65,45 +252,6 @@ window.onload = function() {
         document.getElementById('saveDay').addEventListener('click', saveNewDay);
     }
 
-    // Setup Drag and Drop
-    function setupDragAndDrop() {
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-
-        dropZone.addEventListener('click', () => fileInput.click());
-        
-        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('drag-over');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('drag-over');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            handleFiles(e.dataTransfer.files);
-        });
-    }
-
-    function handleFiles(files) {
-        Array.from(files).forEach(file => {
-            if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const photoData = e.target.result;
-                    droppedPhotos.push(photoData);
-                    displayPhotoPreview(photoData);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
     function displayPhotoPreview(photoData) {
         const preview = document.getElementById('photoPreview');
         const img = document.createElement('img');
@@ -113,38 +261,6 @@ window.onload = function() {
         img.style.maxHeight = '100px';
         img.style.margin = '5px';
         preview.appendChild(img);
-    }
-
-    // Save New Day
-    function saveNewDay() {
-        const date = document.getElementById('dateInput').value;
-        const location = document.getElementById('locationInput').value;
-        const notes = document.getElementById('notesInput').value;
-        
-        if (!date || !location || !notes) {
-            alert('Please fill in all required fields');
-            return;
-        }
-
-        const dayData = {
-            id: Date.now(),
-            date,
-            locations: [{
-                name: location,
-                notes,
-                photos: droppedPhotos
-            }]
-        };
-
-        const days = JSON.parse(localStorage.getItem('travelDays') || '[]');
-        days.push(dayData);
-        localStorage.setItem('travelDays', JSON.stringify(days));
-        
-        // Hide modal using Bootstrap
-        const modal = bootstrap.Modal.getInstance(document.getElementById('staticBackdrop'));
-        modal.hide();
-        
-        loadDays();
     }
 
     // Get Current Location
@@ -180,43 +296,6 @@ window.onload = function() {
         });
 
         updateMap(days);
-    }
-
-    // Create Day Element
-    function createDayElement(day) {
-        const dayDiv = document.createElement('div');
-        dayDiv.className = 'accordion-item';
-        
-        dayDiv.innerHTML = `
-            <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#day${day.id}">
-                    ${new Date(day.date).toLocaleDateString()}
-                </button>
-            </h2>
-            <div id="day${day.id}" class="accordion-collapse collapse">
-                <div class="accordion-body">
-                    ${day.locations.map(location => createLocationHTML(location)).join('')}
-                </div>
-            </div>
-        `;
-        
-        return dayDiv;
-    }
-
-    // Create Location HTML
-    function createLocationHTML(location) {
-        return `
-            <div class="location-item mb-3" onclick="showLocationDetails('${location.name}', '${location.notes}')">
-                <div class="d-flex align-items-center">
-                    <span class="me-2">📍</span>
-                    <div>
-                        <div class="fw-bold">${location.name}</div>
-                        <div class="text-muted small">${location.notes}</div>
-                    </div>
-                </div>
-            </div>
-        `;
     }
 
     // Update Map
