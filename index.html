@@ -12,86 +12,87 @@
     <link rel="stylesheet" href="styles/style.css">
     <script src="scripts/map.js" type="text/javascript"></script>
     
-    <title>Personal Travel Diary </title>
-    
+    <title>Personal Travel Diary</title>
 </head>
-<body>
 
-    <!--Prima parte, cea cu titlul si bara-->
+<body>
     <div class="container">
-        <h1>Personal Travel Diary</h1>
-        <!--<hr>-->
+        <h1 class="my-4">Personal Travel Diary</h1>
     </div>
 
     <div class="container-fluid p-5">
-         <!--Map-->
-        <div id="travelMap"></div> 
+        <!--Map-->
+        <div id="travelMap" class="mb-4"></div> 
     
-        <!--Our insert day button-->
-        <div class="text-center">
-            <button type="button" class="btn btn-primary col-lg-3 col-md-6 col-12">New Day</button>
+        <!--Buttons container-->
+        <div class="text-center mb-4">
+            <button type="button" class="btn btn-primary me-2" id="addDayBtn">
+                <i class="bi bi-plus-circle"></i> New Day
+            </button>
+            <button type="button" class="btn btn-success" id="addLocationBtn">
+                <i class="bi bi-geo-alt"></i> Add Location
+            </button>
         </div>
 
+        <!--Days accordion-->
         <div id="daysContainer" class="accordion"></div>
-    
     </div>
 
-    <!--Add New Day modal -->
-    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <!--Add New Day/Location modal -->
+    <div class="modal fade" id="entryModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="entryModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="staticBackdropLabel">Add New Day</h1>
+                    <h1 class="modal-title fs-5" id="entryModalLabel">Add New Entry</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 
                 <div class="modal-body">
-                    <form id="dayForm">
-                        
-                        <!--The first label is used for the date input-->
-                        <div class="mb-3">
+                    <form id="entryForm">
+                        <!--Date input - only shown for new days-->
+                        <div class="mb-3" id="dateContainer">
                             <label class="form-label">Date</label>
-                            <input type="date" class="form-control" id="dateInput" required placeholder="dd/mm/yyyy">
+                            <input type="date" class="form-control" id="dateInput" required>
                         </div>
 
-                        <!--The second label is used for the location-->
+                        <!--Location input-->
                         <div class="mb-3">
                             <label class="form-label">Location</label>
-                            <div class="input-group mb-3">
+                            <div class="input-group">
                                 <input type="text" class="form-control" id="locationInput" required>
-                                <button class="btn btn-outline-secondary" type="button" id="getCurrentLocation">Current Location</button>
-                              </div>
+                                <button class="btn btn-outline-secondary" type="button" id="getCurrentLocation">
+                                    <i class="bi bi-geo-fill"></i> Current
+                                </button>
+                            </div>
                         </div>
                         
-                        <!--The third label is used for the diary notes-->
+                        <!--Notes input-->
                         <div class="mb-3">
-                            <label class="form-label">Diary Notes</label>
+                            <label class="form-label">Notes</label>
                             <textarea class="form-control" id="notesInput" rows="4" required></textarea>
                         </div>
 
-                        <!--The fourth label is used for drag&drop or attaching the files/photos-->
+                        <!--Photo upload-->
                         <div class="mb-3">
                             <label class="form-label">Photos</label>
-                            <div id="dropZone" class="drop-zone">
-                                Drag & drop photos here or click to upload
+                            <div id="dropZone" class="drop-zone p-4 text-center border rounded">
+                                <i class="bi bi-cloud-upload"></i> Drag & drop photos here or click to upload
                                 <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
                             </div>
-                            <div id="photoPreview" class="d-flex flex-wrap gap-2"></div>
+                            <div id="photoPreview" class="d-flex flex-wrap gap-2 mt-2"></div>
                         </div>
                     </form>
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="saveDay">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveEntry">Save</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Location details modal -->
-     <!--de adaugat atunci cand e in pop up locatia, pentru a vedea detaliile sa avem: 1. un chenar cu titlu details si in chenar sa fie informatiile despre locatie
-     2. un chenar tip canvas in care sa stocam pozele - tema de gandire ca daca avem canvasul prea mic si prea multe poze, si ies pozele din canvas ce facem????-->
     <div class="modal fade" id="locationDetailsModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -100,18 +101,24 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="locationDetailsNotes" class="mb-4"></div>
-                    <div id="locationDetailsPhotos" class="d-flex flex-wrap gap-3"></div>
-
-                    <!-- Canvas for photo preview -->
-                    <h5>Photos on Canvas</h5>
-                    <canvas id="locationCanvas" width="800" height="400" style="border: 1px solid #ccc;"></canvas>
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Notes</h6>
+                            <div id="locationDetailsNotes"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-3 text-muted">Photos</h6>
+                            <div id="locationDetailsPhotos" class="d-flex flex-wrap gap-3"></div>
+                            < as id="locationCanvas" class="mt-4" width="800" height="400" 
+                                    style="border: 1px solid #dee2e6; width: 100%; height: auto;"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-
 </body>
 </html>
-

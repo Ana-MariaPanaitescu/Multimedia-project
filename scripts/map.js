@@ -178,7 +178,7 @@ window.onload = function() {
         return `
             <div class="location-container">
                 <div class="location-item mb-2 d-flex align-items-center" 
-                     onclick="showLocationDetails('${location.name}', '${location.notes}', ${JSON.stringify(location.photos)})">
+                     onclick="showLocationDetails(${JSON.stringify(location)})">
                     <span class="me-2">📍</span>
                     <div>
                         <div class="fw-bold">${location.name}</div>
@@ -193,7 +193,9 @@ window.onload = function() {
     // Add location to existing day
     window.addLocationToDay = function(dayId) {
         droppedPhotos = [];
-        document.getElementById('dateInput').value = '';
+        // Hide date input since we're adding to existing day
+        document.getElementById('dateContainer').style.display = 'none';
+        document.getElementById('staticBackdropLabel').textContent = 'Add New Location';
         document.getElementById('locationInput').value = '';
         document.getElementById('notesInput').value = '';
         
@@ -202,7 +204,7 @@ window.onload = function() {
         
         const modal = new bootstrap.Modal(document.getElementById('staticBackdrop'));
         modal.show();
-
+    
         // Remove existing click handler and add new one for saving location
         const saveButton = document.getElementById('saveDay');
         saveButton.onclick = () => saveNewLocation(dayId);
@@ -216,7 +218,7 @@ window.onload = function() {
             alert('Please fill in all required fields');
             return;
         }
-
+    
         const days = JSON.parse(localStorage.getItem('travelDays') || '[]');
         const dayIndex = days.findIndex(day => day.id === dayId);
         
@@ -224,12 +226,16 @@ window.onload = function() {
             days[dayIndex].locations.push({
                 name: location,
                 notes,
-                photos: droppedPhotos
+                photos: droppedPhotos // Save the photos array
             });
             localStorage.setItem('travelDays', JSON.stringify(days));
             
             const modal = bootstrap.Modal.getInstance(document.getElementById('staticBackdrop'));
             modal.hide();
+            
+            // Reset modal for future use
+            document.getElementById('dateContainer').style.display = 'block';
+            document.getElementById('staticBackdropLabel').textContent = 'Add New Day';
             
             // Reset save button to original handler
             document.getElementById('saveDay').onclick = saveNewDay;
@@ -248,7 +254,7 @@ window.onload = function() {
             alert('Please fill in all required fields');
             return;
         }
-
+    
         const days = JSON.parse(localStorage.getItem('travelDays') || '[]');
         
         // Check if date already exists
@@ -259,7 +265,7 @@ window.onload = function() {
             days[existingDayIndex].locations.push({
                 name: location,
                 notes,
-                photos: droppedPhotosf
+                photos: droppedPhotos // Fixed typo in variable name
             });
         } else {
             // Create new day
@@ -269,14 +275,14 @@ window.onload = function() {
                 locations: [{
                     name: location,
                     notes,
-                    photos: droppedPhotos
+                    photos: droppedPhotos // Save the photos array
                 }]
             });
         }
-
+    
         localStorage.setItem('travelDays', JSON.stringify(days));
         
-        // Reset canvas
+        // Reset canvas and photos array
         photoCtx.fillStyle = '#f8f9fa';
         photoCtx.fillRect(0, 0, photoCanvas.width, photoCanvas.height);
         currentPhotoX = PHOTO_PADDING;
@@ -287,7 +293,7 @@ window.onload = function() {
         modal.hide();
         
         loadDays();
-    }
+    }    
 
     // Setup Event Listeners
     function setupEventListeners() {
@@ -386,22 +392,53 @@ window.onload = function() {
     }
 
      // Update showLocationDetails to handle photos
-     window.showLocationDetails = function(name, notes, photos) {
+     window.showLocationDetails = function(location) {
         const modal = new bootstrap.Modal(document.getElementById('locationDetailsModal'));
-        document.getElementById('locationDetailsTitle').textContent = name;
-        document.getElementById('locationDetailsNotes').textContent = notes;
+        document.getElementById('locationDetailsTitle').textContent = location.name;
+        document.getElementById('locationDetailsNotes').textContent = location.notes;
         
         const photosContainer = document.getElementById('locationDetailsPhotos');
         photosContainer.innerHTML = '';
         
-        if (photos && photos.length > 0) {
-            photos.forEach(photo => {
+        if (location.photos && location.photos.length > 0) {
+            location.photos.forEach(photo => {
                 const img = document.createElement('img');
                 img.src = photo.data;
                 img.style.maxWidth = '200px';
                 img.style.maxHeight = '200px';
                 img.className = 'me-2 mb-2';
                 photosContainer.appendChild(img);
+            });
+    
+            // Draw photos on canvas
+            const canvas = document.getElementById('locationCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            let currentX = 10;
+            let currentY = 10;
+            const maxHeight = 100;
+            
+            location.photos.forEach(photo => {
+                const img = new Image();
+                img.onload = () => {
+                    // Calculate scaled dimensions
+                    const scale = maxHeight / img.height;
+                    const width = img.width * scale;
+                    const height = maxHeight;
+                    
+                    // Move to next row if needed
+                    if (currentX + width + 10 > canvas.width) {
+                        currentX = 10;
+                        currentY += maxHeight + 10;
+                    }
+                    
+                    // Draw image
+                    ctx.drawImage(img, currentX, currentY, width, height);
+                    currentX += width + 10;
+                };
+                img.src = photo.data;
             });
         }
         
