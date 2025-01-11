@@ -1,14 +1,14 @@
 window.onload = function() {
 
-    // Clear localStorage when page loads
+    // to clear localStorage when page loads
     localStorage.removeItem('travelDays');
     
-    // Global variables
+    //  here we have global variables to manage map and photo data
     let map;
     let markers = [];
     let droppedPhotos = [];
 
-    // New canvas-related variables
+    // canvas-related variables for photo display
     let photoCanvas;
     let photoCtx;
     const PHOTO_SIZE = 100;
@@ -16,6 +16,7 @@ window.onload = function() {
     let currentPhotoX = PHOTO_PADDING;
     let currentPhotoY = PHOTO_PADDING;
 
+    //custom marker icon "pin with the balloon" for the current location of the user
     const customIcon = L.icon({
         iconUrl: 'images/balloon2.png',
         iconSize: [50, 50],
@@ -23,9 +24,10 @@ window.onload = function() {
         popupAnchor: [0, -32]
     });
 
-    // Initialize map with geolocation
+    //initialize map with geolocation
     navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError);
 
+    //event listeners and drag-and-drop functionality
     setupEventListeners();
     setupDragAndDrop();
     loadDays();
@@ -40,7 +42,7 @@ window.onload = function() {
 	        maxZoom: 16
         }).addTo(map);
         
-        // Use the custom icon for current location
+        //the custom icon for current location with the balloon
         const customMarker = L.marker([lat, long], { icon: customIcon }).addTo(map);
         customMarker.bindPopup('Current location with the balloon!');
         
@@ -58,7 +60,7 @@ window.onload = function() {
         
     }
 
-     // Set up Canvas for photo display
+     //the set up for the canvas for photo display
      function setupCanvas() {
         photoCanvas = document.createElement('canvas');
         photoCanvas.width = 465;
@@ -75,7 +77,7 @@ window.onload = function() {
         photoCtx.fillStyle = '#f8f9fa';
         photoCtx.fillRect(0, 0, photoCanvas.width, photoCanvas.height);
 
-        // Add drag and drop events to canvas
+        //drag and drop events
         photoCanvas.addEventListener('dragover', (e) => {
             e.preventDefault();
             photoCanvas.style.border = '2px dashed #007bff';
@@ -92,7 +94,7 @@ window.onload = function() {
         });
     }
 
-    // Setup drag and drop functionality
+    // the drag and drop functionality
     function setupDragAndDrop() {
         setupCanvas();
         
@@ -118,6 +120,7 @@ window.onload = function() {
         });
     }
 
+    //function to handle the files dropped and then draw them on the canvas
     function handleFiles(files) {
         Array.from(files).forEach(file => {
             if (file.type.startsWith('image/')) {
@@ -125,21 +128,21 @@ window.onload = function() {
                 reader.onload = (e) => {
                     const img = new Image();
                     img.onload = () => {
-                        // Calculate scaled dimensions
+                        // here we calculated the scaled dimensions
                         let scale = Math.min(PHOTO_SIZE / img.width, PHOTO_SIZE / img.height);
                         let width = img.width * scale;
                         let height = img.height * scale;
                         
-                        // Check if we need to move to next row
+                        //if there are many pictures to move to the next row
                         if (currentPhotoX + width + PHOTO_PADDING > photoCanvas.width) {
                             currentPhotoX = PHOTO_PADDING;
                             currentPhotoY += PHOTO_SIZE + PHOTO_PADDING;
                         }
                         
-                        // Draw image on canvas
+                        //draw theimage on canvas
                         photoCtx.drawImage(img, currentPhotoX, currentPhotoY, width, height);
                         
-                        // Store photo data
+                        //save the photo data
                         droppedPhotos.push({
                             data: e.target.result,
                             x: currentPhotoX,
@@ -148,7 +151,7 @@ window.onload = function() {
                             height: height
                         });
                         
-                        // Update position for next photo
+                        //update position for next photo
                         currentPhotoX += width + PHOTO_PADDING;
                     };
                     img.src = e.target.result;
@@ -158,6 +161,7 @@ window.onload = function() {
         });
     }
 
+    //here we create day details with locations and then display the details
     function createDayElement(day) {
         const dayDiv = document.createElement('div');
         dayDiv.className = 'accordion-item';
@@ -187,14 +191,12 @@ window.onload = function() {
     }
 
     function createLocationHTML(location, isLast) {
-        // Escape the location data to prevent JSON parsing errors
         const safeLocation = JSON.stringify({
             name: location.name,
             notes: location.notes,
             photos: location.photos || []
         }).replace(/'/g, "\\'");
     
-        // Add photo preview thumbnails
         const photoThumbnails = location.photos && location.photos.length > 0 
             ? `<div class="photo-thumbnails d-flex flex-wrap gap-2 mt-2">
                 ${location.photos.map(photo => `
@@ -225,39 +227,35 @@ window.onload = function() {
         `;
     }
 
-    // Add location to existing day
+    // here we add a new location to an existing day
     window.addLocationToDay = function(dayId) {
         droppedPhotos = [];
         document.getElementById('dateInput').value = '';
         document.getElementById('locationInput').value = '';
         document.getElementById('notesInput').value = '';
         
-        // Reset canvas
+        // reset canvas for the new input
         setupCanvas();
         
         const modal = new bootstrap.Modal(document.getElementById('staticBackdrop'));
         modal.show();
-
-        // Remove existing click handler and add new one for saving location
         const saveButton = document.getElementById('saveDay');
         saveButton.onclick = () => saveNewLocation(dayId);
     };
 
+    //here the form and canvas reset after we save the details
     function resetForm() {
-        // Reset canvas
         photoCtx.fillStyle = '#f8f9fa';
         photoCtx.fillRect(0, 0, photoCanvas.width, photoCanvas.height);
         currentPhotoX = PHOTO_PADDING;
         currentPhotoY = PHOTO_PADDING;
         droppedPhotos = [];
-        
-        // Reset form inputs
         document.getElementById('dateInput').value = '';
         document.getElementById('locationInput').value = '';
         document.getElementById('notesInput').value = '';
     }
 
-    // Modified saveNewDay function without validations
+    //function to save new day data, including locations and photos
     function saveNewDay() {
         const date = document.getElementById('dateInput').value;
         const location = document.getElementById('locationInput').value;
@@ -265,7 +263,6 @@ window.onload = function() {
         
         const days = JSON.parse(localStorage.getItem('travelDays') || '[]');
         
-        // Process photos before saving
         const processedPhotos = droppedPhotos.map(photo => ({
             data: photo.data,
             x: photo.x,
@@ -274,7 +271,6 @@ window.onload = function() {
             height: photo.height
         }));
         
-        // Check if date already exists
         const existingDayIndex = days.findIndex(day => day.date === date);
         
         if (existingDayIndex >= 0) {
@@ -298,9 +294,7 @@ window.onload = function() {
         }
     
         localStorage.setItem('travelDays', JSON.stringify(days));
-        
-        // Reset form and canvas
-        resetForm();
+        resetForm();//reset the form and canvas after saving
         
         const modal = bootstrap.Modal.getInstance(document.getElementById('staticBackdrop'));
         modal.hide();
@@ -308,7 +302,6 @@ window.onload = function() {
         loadDays();
     }
 
-    // Modified saveNewLocation function without validations
     function saveNewLocation(dayId) {
         const location = document.getElementById('locationInput').value;
         const notes = document.getElementById('notesInput').value;
@@ -317,7 +310,6 @@ window.onload = function() {
         const dayIndex = days.findIndex(day => day.id === dayId);
         
         if (dayIndex > -1) {
-            // Process photos before saving
             const processedPhotos = droppedPhotos.map(photo => ({
                 data: photo.data,
                 x: photo.x,
@@ -340,14 +332,13 @@ window.onload = function() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('staticBackdrop'));
             modal.hide();
             
-            // Reset save button to original handler
             document.getElementById('saveDay').onclick = saveNewDay;
             
             loadDays();
         }
     }
 
-    // Setup Event Listeners
+    //setup Event Listeners
     function setupEventListeners() {
         const newDayBtn = document.querySelector('.btn-primary');
         newDayBtn.addEventListener('click', () => {
@@ -364,15 +355,10 @@ window.onload = function() {
         });
     
         document.getElementById('getCurrentLocation').addEventListener('click', getCurrentLocation);
-        
-        // Ensure the save button is properly initialized
         const saveButton = document.getElementById('saveDay');
         saveButton.onclick = saveNewDay;
     }
 
-    
-
-    // Get Current Location
     function getCurrentLocation() {
         if ("geolocation" in navigator) {
             navigator.geolocation.getCurrentPosition(async position => {
@@ -393,7 +379,7 @@ window.onload = function() {
         }
     }
 
-    // Load and Display Days
+    //load and display saved days from localStorage
     function loadDays() {
         const days = JSON.parse(localStorage.getItem('travelDays') || '[]');
         const container = document.getElementById('daysContainer');
@@ -407,9 +393,10 @@ window.onload = function() {
         updateMap(days);
     }
 
-    // Update Map
+    
+    //update the map with new location markers based on saved data
     function updateMap(days) {
-        // Clear existing markers
+        //clear existing markers
         markers.forEach(marker => marker.remove());
         markers = [];
 
@@ -422,7 +409,6 @@ window.onload = function() {
                     const data = await response.json();
                     
                     if (data.length > 0) {
-                        // Use the custom icon for each location marker
                         const marker = L.marker([data[0].lat, data[0].lon], { icon: customIcon })
                             .bindPopup(location.name)
                             .addTo(map);
@@ -440,21 +426,18 @@ window.onload = function() {
         }
     }
 
-     // Update showLocationDetails to handle photos
+     // Update showLocationDetails 
      window.showLocationDetails = function(location) {
         const modal = new bootstrap.Modal(document.getElementById('locationDetailsModal'));
         document.getElementById('locationDetailsTitle').textContent = location.name;
         document.getElementById('locationDetailsNotes').textContent = location.notes;
         
-        // Clear the photos container but keep it for structure
         const photosContainer = document.getElementById('locationDetailsPhotos');
         photosContainer.innerHTML = '';
         
-        // Handle canvas display
         const canvas = document.getElementById('locationCanvas');
         const ctx = canvas.getContext('2d');
         
-        // Clear canvas
         ctx.fillStyle = '#f8f9fa';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
@@ -467,23 +450,21 @@ window.onload = function() {
             location.photos.forEach(photo => {
                 const img = new Image();
                 img.onload = () => {
-                    // Calculate scaled dimensions
+                    //here we calculated the scale dimensions
                     const scale = maxHeight / img.height;
                     const width = img.width * scale;
                     const height = maxHeight;
                     
-                    // Move to next row if needed
                     if (currentX + width + 10 > canvas.width) {
                         currentX = 10;
                         currentY += maxHeight + 10;
                     }
                     
-                    // Draw image
                     ctx.drawImage(img, currentX, currentY, width, height);
                     currentX += width + 10;
                     
                     loadedImages++;
-                    // If all images are loaded, make sure they're visible
+                    
                     if (loadedImages === location.photos.length) {
                         canvas.style.display = 'block';
                     }
@@ -491,7 +472,6 @@ window.onload = function() {
                 img.src = photo.data;
             });
         } else {
-            // Show "No photos available" message in canvas
             ctx.fillStyle = '#666';
             ctx.font = '16px Arial';
             ctx.textAlign = 'center';

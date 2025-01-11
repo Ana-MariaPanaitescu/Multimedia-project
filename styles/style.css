@@ -19,7 +19,6 @@ h1 {
     max-width: 100%;
 }
 
-/* Travel map styling */
 #travelMap {
     height: 500px;
     width: calc(100% - 40px);
@@ -29,7 +28,6 @@ h1 {
     border: 2px solid #ccc;
 }
 
-/* Button styling */
 #insertDayBtn {
     margin-bottom: 40px;
     padding: 12px 20px;
@@ -46,7 +44,6 @@ h1 {
     color: #fff;
 }
 
-/* Accordion and modals styling */
 #daysContainer {
     margin-top: 20px;
     padding: 20px;
@@ -73,7 +70,6 @@ h1 {
     justify-content: space-between;
 }
 
-/* Form input styling */
 form label {
     font-weight: bold;
     color: #555;
@@ -95,7 +91,6 @@ form textarea:focus {
     box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
 }
 
-/* Dropzone styling */
 #dropZone {
     border: 2px dashed #007bff;
     border-radius: 10px;
@@ -113,7 +108,6 @@ form textarea:focus {
     color: #0056b3;
 }
 
-/* Photo preview styling */
 #photoPreview {
     display: flex;
     flex-wrap: wrap;
@@ -138,7 +132,6 @@ form textarea:focus {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Canvas styling */
 #locationCanvas {
     width: 100%;
     height: auto;
@@ -147,7 +140,6 @@ form textarea:focus {
     margin-top: 20px;
 }
 
-/* Accordion item styling */
 .location-item {
     padding: 15px;
     margin-bottom: 10px;
@@ -163,7 +155,6 @@ form textarea:focus {
     transform: scale(1.02);
 }
 
-/* Responsive design adjustments */
 @media (max-width: 768px) {
     h1 {
         font-size: 2em;
