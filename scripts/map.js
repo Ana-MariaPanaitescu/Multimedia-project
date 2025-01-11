@@ -26,6 +26,10 @@ window.onload = function() {
     // Initialize map with geolocation
     navigator.geolocation.getCurrentPosition(onLocationSuccess, onLocationError);
 
+    setupEventListeners();
+    setupDragAndDrop();
+    loadDays();
+
     function onLocationSuccess(position) {
         let lat = position.coords.latitude;
         let long = position.coords.longitude;
@@ -40,9 +44,7 @@ window.onload = function() {
         const customMarker = L.marker([lat, long], { icon: customIcon }).addTo(map);
         customMarker.bindPopup('Current location with the balloon!');
         
-        setupEventListeners();
-        setupDragAndDrop();
-        loadDays();
+       
     }
 
     function onLocationError(error) {
@@ -53,9 +55,7 @@ window.onload = function() {
 	        maxZoom: 16
         }).addTo(map);
         
-        setupEventListeners();
-        setupDragAndDrop();
-        loadDays();
+        
     }
 
      // Set up Canvas for photo display
@@ -357,9 +357,7 @@ window.onload = function() {
             document.getElementById('notesInput').value = '';
             setupCanvas();
             
-            // Ensure the save button has the correct handler
-            const saveButton = document.getElementById('saveDay');
-            saveButton.onclick = saveNewDay;
+
             
             const modal = new bootstrap.Modal(document.getElementById('staticBackdrop'));
             modal.show();
@@ -372,16 +370,7 @@ window.onload = function() {
         saveButton.onclick = saveNewDay;
     }
 
-    function displayPhotoPreview(photoData) {
-        const preview = document.getElementById('photoPreview');
-        const img = document.createElement('img');
-        img.src = photoData;
-        img.classList.add('preview-image');
-        img.style.maxWidth = '100px';
-        img.style.maxHeight = '100px';
-        img.style.margin = '5px';
-        preview.appendChild(img);
-    }
+    
 
     // Get Current Location
     function getCurrentLocation() {
