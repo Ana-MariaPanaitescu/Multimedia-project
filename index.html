@@ -38,8 +38,8 @@
     </div>
 
     <!--Add New Day modal -->
-    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
-        <div class="modal-dialog">
+    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" role="dialog">
+        <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h1 class="modal-title fs-5" id="staticBackdropLabel">Add New Day</h1>
@@ -73,9 +73,7 @@
                         <!--The fourth label is used for drag&drop or attaching the files/photos-->
                         <div class="mb-3">
                             <label class="form-label">Photos</label>
-                            <div id="dropZone" class="drop-zone" 
-                                 ondrop="handleDrop(event)" 
-                                 ondragover="allowDrop(event)">
+                            <div id="dropZone" class="drop-zone">
                                 Drag & drop photos here or click to upload
                                 <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="previewFiles()">
                             </div>
